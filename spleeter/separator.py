@@ -68,7 +68,7 @@ class DataGenerator(object):
             buffer = self._current_data
 
 
-def create_estimator(params, MWF):
+def create_estimator(params, MWF, config=None):
     """
     Initialize tensorflow estimator that will perform separation
 
@@ -84,7 +84,17 @@ def create_estimator(params, MWF):
     params["MWF"] = MWF
     # Setup config
     session_config = tf.compat.v1.ConfigProto()
-    session_config.gpu_options.per_process_gpu_memory_fraction = 0.7
+    if config:
+        if 'per_process_gpu_memory_fraction' in config:
+            session_config.gpu_options.per_process_gpu_memory_fraction = config['per_process_gpu_memory_fraction']
+        if 'allow_soft_placement' in config:
+            session_config.allow_soft_placement = config['allow_soft_placement']
+        if 'allow_growth' in config:
+            session_config.gpu_options.allow_growth = config['allow_growth']
+        else:
+            session_config.gpu_options.per_process_gpu_memory_fraction = 0.7
+    else:
+        session_config.gpu_options.per_process_gpu_memory_fraction = 0.7
     config = tf.estimator.RunConfig(session_config=session_config)
     # Setup estimator
     estimator = tf.estimator.Estimator(
@@ -102,6 +112,7 @@ class Separator(object):
         MWF: bool = False,
         stft_backend: STFTBackend = STFTBackend.AUTO,
         multiprocess: bool = True,
+        config = None
     ) -> None:
         """
         Default constructor.
@@ -130,6 +141,8 @@ class Separator(object):
         self._params["stft_backend"] = STFTBackend.resolve(stft_backend)
         self._data_generator = DataGenerator()
 
+        self._config = config
+
     def __del__(self) -> None:
         if self._session:
             self._session.close()
@@ -144,7 +157,7 @@ class Separator(object):
                 Generator of prediction.
         """
         if self._prediction_generator is None:
-            estimator = create_estimator(self._params, self._MWF)
+            estimator = create_estimator(self._params, self._MWF, self._config)
 
             def get_dataset():
                 return tf.data.Dataset.from_generator(
