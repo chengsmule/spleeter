@@ -68,7 +68,7 @@ class DataGenerator(object):
             buffer = self._current_data
 
 
-def create_estimator(params, MWF, config=None):
+def create_estimator(params, MWF, sess_config=None):
     """
     Initialize tensorflow estimator that will perform separation
 
@@ -84,13 +84,13 @@ def create_estimator(params, MWF, config=None):
     params["MWF"] = MWF
     # Setup config
     session_config = tf.compat.v1.ConfigProto()
-    if config:
-        if 'per_process_gpu_memory_fraction' in config:
-            session_config.gpu_options.per_process_gpu_memory_fraction = config['per_process_gpu_memory_fraction']
-        if 'allow_soft_placement' in config:
-            session_config.allow_soft_placement = config['allow_soft_placement']
-        if 'allow_growth' in config:
-            session_config.gpu_options.allow_growth = config['allow_growth']
+    if sess_config:
+        if 'per_process_gpu_memory_fraction' in sess_config:
+            session_config.gpu_options.per_process_gpu_memory_fraction = sess_config['per_process_gpu_memory_fraction']
+        if 'allow_soft_placement' in sess_config:
+            session_config.allow_soft_placement = sess_config['allow_soft_placement']
+        if 'allow_growth' in sess_config:
+            session_config.gpu_options.allow_growth = sess_config['allow_growth']
         else:
             session_config.gpu_options.per_process_gpu_memory_fraction = 0.7
     else:
@@ -112,7 +112,7 @@ class Separator(object):
         MWF: bool = False,
         stft_backend: STFTBackend = STFTBackend.AUTO,
         multiprocess: bool = True,
-        config = None
+        config: dict = None
     ) -> None:
         """
         Default constructor.
